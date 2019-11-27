@@ -1,0 +1,6 @@
+[masters]
+pi-master-[1:1].local
+
+[masters:vars]
+ansible_connection=ssh
+ansible_user=pi
