@@ -1,0 +1,41 @@
+---
+- name: Install python dependencies
+  pip:
+    name: ['setuptools', 'openshift', 'PyYAML']
+
+- name: Create cert-manager namespace
+  become: yes
+  k8s:
+    kubeconfig: /etc/rancher/k3s/k3s.yaml
+    name: cert-manager
+    api_version: v1
+    kind: Namespace
+    state: present
+
+- get_url:
+    url: https://github.com/jetstack/cert-manager/releases/download/v0.12.0/cert-manager.yaml
+    dest: /tmp/cert-manager.yaml
+    mode: '0440'
+
+- name: Deploy cert-manager
+  become: yes
+  shell: kubectl apply -f /tmp/cert-manager.yaml
+  # Would rather prefer to use this
+  #k8s:
+  #  kubeconfig: /etc/rancher/k3s/k3s.yaml
+  #  state: present
+  #  src: /tmp/cert-manager.yaml
+
+- copy:
+    src: kubernetes/cluster-issuer.yaml
+    dest: /tmp/cluster-issuer.yaml
+    owner: pi
+    group: pi
+    mode: '0644'
+
+- name: Deploy cluster issuer
+  become: yes
+  k8s:
+    kubeconfig: /etc/rancher/k3s/k3s.yaml
+    state: present
+    src: /tmp/cluster-issuer.yaml

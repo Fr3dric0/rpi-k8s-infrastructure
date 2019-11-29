@@ -1,0 +1,121 @@
+---
+- name: Update and upgrade apt packages
+  apt:
+    upgrade: yes
+    update_cache: yes
+    cache_valid_time: 86400 #One day
+
+- name: Install apt-transport-https
+  apt:
+    name: apt-transport-https
+    state: present
+
+- name: Install firewall
+  apt:
+    name: ufw
+    state: present
+
+- name: Allow SSH
+  ufw:
+    rule: allow
+    port: ssh
+    proto: tcp
+
+- name: Allow generic HTTP port
+  ufw:
+    rule: allow
+    port: '80'
+
+- name: Enable firewall
+  ufw:
+    state: disabled
+
+# Greatly reduce brute force attacks
+- name: Install fail2ban
+  apt:
+    name: fail2ban
+    state: present
+
+# Ensure regular security updates are included
+- name: Install unattended-upgrades
+  apt:
+    name: unattended-upgrades
+    state: present
+
+- name: Copy unattended-upgrades primary configurations
+  copy:
+    src: files/50unattended-upgrades
+    dest: /etc/apt/apt.conf.d/
+    mode: '0644'
+
+- name: Copy unattended-upgrades periodic rules
+  copy:
+    src: files/02periodic
+    dest: /etc/apt/apt.conf.d/
+    mode: '0644'
+
+- name: Install NTFS support
+  apt:
+    name: ntfs-3g
+    state: present
+
+- name: Retrieve pi User ID
+  shell: id -u pi
+  register: piuid
+
+- set_fact:
+    piuid={{ piuid.stdout }}
+
+- name: Retrieve pi Group ID
+  shell: id -g pi
+  register: piguid
+
+- set_fact:
+    piguid={{ piguid.stdout }}
+
+- name: Make sure installed/latest ca-certificates
+  apt: 
+    name: ca-certificates
+    state: latest
+
+# Need to do some manual backup  
+- name: Copy old cmdline.txt
+  copy:
+    src: /boot/cmdline.txt
+    dest: /boot/cmdline.txt.bkup
+    remote_src: yes
+
+- name: Add cgroup flags
+  replace:
+    path: '/boot/cmdline.txt'
+    regexp: 'rootwait$'
+    replace: 'rootwait cgroup_enable=cpuset cgroup_enable=memory cgroup_memory=1'
+  register: cgroupflags
+
+- name: Disable swap
+  shell: dphys-swapfile swapoff && dphys-swapfile uninstall && update-rc.d dphys-swapfile remove
+  register: disableswap
+
+- name: Setting GPU memory split to {{ gpu_mem }}mb
+  lineinfile:
+    path: /boot/config.txt
+    regexp: '^#?gpu_mem'
+    line: 'gpu_mem={{ gpu_mem }}'
+    insertafter: EOF
+    state: present
+  register: gpumemsplit
+
+- name: Reboot Raspberry
+  reboot:
+    msg: 'Static IP assigned rebooting...'
+  when: cgroupflags.changed or gpumemsplit.changed
+
+- name: Install pip
+  apt:
+    name: python-pip
+    state: present
+
+- name: Install pip 3
+  apt:
+    name: python3-pip
+    state: present
