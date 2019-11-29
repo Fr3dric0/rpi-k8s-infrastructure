@@ -1,0 +1,68 @@
+---
+- name: Check if k3s service exists
+  stat: path=/etc/systemd/system/k3s.service
+  register: k3sstat # use k3sstat.stat.exists to verify
+
+- name: Bootstrap k3s
+  shell: curl -sfL https://get.k3s.io | sh -
+  when: not k3sstat.stat.exists
+
+- name: Ensure k3s service is running
+  systemd:
+    state: restarted
+    name: k3s
+    enabled: yes
+ 
+# Simplifies management of k3s
+- name: Install k3sup
+  become: yes
+  shell: curl -sLS https://get.k3sup.dev | sh && sudo install k3sup /usr/local/bin/
+  ignore_errors: yes
+
+- name: Read Agent join token
+  become: yes
+  shell: cat /var/lib/rancher/k3s/server/node-token
+  register: readagentjointoken
+
+# - add_host:
+#     name:   "K8S_TOKEN_HOLDER"
+#     token:  "{{ K8S_TOKEN.stdout }}"
+#     hash:   "{{ K8S_MASTER_CA_HASH.stdout }}"
+
+- name: Install OpenFaaS
+  become: yes
+  shell: k3sup app install openfaas
+
+- name: Install OpenFaas CLI
+  become: yes
+  shell: curl -SLsf https://cli.openfaas.com | sudo sh
+
+- name: Allow Kubernetes API PORT
+  ufw:
+    rule: 'allow'
+    port: '6443'
+
+- name: Allow Kubelet API
+  ufw:
+    rule: 'allow'
+    port: '10250'
+
+- name: Allow Etcd server client API
+  ufw:
+    rule: 'allow'
+    port: 2379:2380
+
+- name: Allow Kube Scheduler
+  ufw:
+    rule: 'allow'
+    port: '10251'
+
+- name: Allow Kube controller-manager
+  ufw:
+    rule: 'allow'
+    port: '10252'
+
+- name: Allow read-only Kubelet API
+  ufw:
+    rule: 'allow'
+    port: '10255'

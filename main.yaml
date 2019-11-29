@@ -3,6 +3,7 @@
 
   vars:
     gpu_mem: 16
+    k3s_master_host: 'https://192.168.0.105:6443'
 
   tasks:
   - name: Congratulations!
@@ -39,7 +40,7 @@
 
   - name: Enable firewall
     ufw:
-      state: disabled
+      state: enabled
 
   # Greatly reduce brute force attacks
   - name: Install fail2ban
@@ -122,4 +123,4 @@
     when: cgroupflags.changed or gpumemsplit.changed
 
   - name: Setup k3s
-    import_tasks: tasks/k3s.yml
+    import_tasks: tasks/k3s_master.yml

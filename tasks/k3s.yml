@@ -1,8 +1,0 @@
----
-- name: Check if k3s service exists
-  stat: path=/etc/init.d/k3s
-  register: k3sstat # use k3sstat.exists to verify
-
-- name: Bootstrap k3s
-  shell: curl -sfL https://get.k3s.io | sh -
-  when: k3sstat.exists is false
