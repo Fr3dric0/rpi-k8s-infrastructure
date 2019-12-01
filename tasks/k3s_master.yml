@@ -1,12 +1,4 @@
 ---
-- name: Check if k3s service exists
-  stat: path=/etc/systemd/system/k3s.service
-  register: k3sstat # use k3sstat.stat.exists to verify
-
-- name: Bootstrap k3s
-  shell: curl -sfL https://get.k3s.io | sh -
-  when: not k3sstat.stat.exists
-
 - name: Ensure k3s service is running
   systemd:
     state: restarted
@@ -19,16 +11,6 @@
   become: yes
   shell: curl -sLS https://get.k3sup.dev | sh && sudo install k3sup /usr/local/bin/
   ignore_errors: yes
-
-- name: Read Agent join token
-  become: yes
-  shell: cat /var/lib/rancher/k3s/server/node-token
-  register: readagentjointoken
-
-- add_host:
-    name:   "K8S_TOKEN_HOLDER"
-    token:  "{{ readagentjointoken.stdout }}"
-    hash:   "{{ readagentjointoken.stdout }}"
 
 - name: Install OpenFaaS
   become: yes

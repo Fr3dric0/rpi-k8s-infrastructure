@@ -8,6 +8,7 @@
     - {role: pi-base-setup}
     - {role: pi-prepare-containerization}
     - {role: pi-security}
+    - {role: pi-k3s-setup}
 
   tasks:
   - debug:
