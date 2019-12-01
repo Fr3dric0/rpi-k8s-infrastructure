@@ -1,0 +1,65 @@
+---
+- set_fact:
+    is_agent_node='{{ k3s_master_url != "" and k3s_master_token != "" }}'
+- set_fact:
+    is_master_node='{{ not is_agent_node }}'
+
+# Check if either k3s-server or k3s-agent exists
+- name: Check if k3s-server service exists
+  stat: path=/etc/systemd/system/k3s.service
+  register: k3sstat
+- name: Check if k3s-agent service exists
+  stat: path=/etc/systemd/system/k3s-agent.service
+  register: k3sagentstat
+
+- set_fact:
+    k3s_exists='{{ k3sstat.stat.exists or k3sagentstat.stat.exists }}'
+
+- debug:
+    msg: "Setting up as Kubernetes agent"
+  when: is_agent_node | bool
+- debug:
+    msg: "Setting up as Kubernetes mater"
+  when: is_master_node | bool
+
+- name: Bootstrap k3s
+  shell: curl -sfL https://get.k3s.io | sh -
+  environment:
+    K3S_URL: '{{ k3s_master_url }}'
+    K3S_TOKEN: '{{ k3s_master_token }}'
+  when: not k3s_exists | bool
+
+- name: Ensure k3s-server service is running
+  systemd:
+    state: restarted
+    name: k3s
+    enabled: yes
+  when: not k3s_exists and is_master_node
+
+- name: Ensure k3s-agent service is running
+  systemd:
+    state: restarted
+    name: k3s-agent
+    enabled: yes
+  when: not k3s_exists and is_agent_node
+
+# Memorize some necessary values from master node,
+# which can be used by agent-nodes
+- name: Read Agent join token
+  become: yes
+  shell: cat /var/lib/rancher/k3s/server/node-token
+  register: readagentjointoken
+  when: is_master_node | bool
+  no_log: true
+- add_host:
+    name: "K8S_TOKEN_HOLDER"
+    token: "{{ readagentjointoken.stdout }}"
+    hash: "{{ readagentjointoken.stdout }}"
+  when: is_master_node | bool
+  no_log: true
+
+# Our agent should not be ready to join our master node
+- name: Join agent to master node
+  become: yes
+  shell: k3s agent --server {{ k3s_master_url }} --token {{ k3s_master_token }}
+  when: not k3s_exists and is_agent_node

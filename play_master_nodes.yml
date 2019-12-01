@@ -2,17 +2,17 @@
   become: yes
 
   vars:
-    gpu_mem: 16
     k3s_master_host: 'https://192.168.0.105:6443'
 
+  roles:
+    - {role: pi-base-setup}
+    - {role: pi-prepare-containerization}
+    - {role: pi-security}
+
   tasks:
-  - name: Congratulations!
-    debug:
+  - debug:
       msg:
         - "Configuring this host as k8s master node"
-
-  - name: Prepare Raspberry for k3s
-    import_tasks: tasks/rpi_prepare_k3s.yml
 
   - name: Setup k3s
     import_tasks: tasks/k3s_master.yml

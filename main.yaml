@@ -1,2 +1,5 @@
 - name: Setup master nodes
   import_playbook: play_master_nodes.yml
+
+- name:
+  import_playbook: play_agent_nodes.yml

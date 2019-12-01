@@ -1,0 +1,30 @@
+- hosts: agents
+  become: yes
+
+  roles:
+    - {role: pi-base-setup}
+    - {role: pi-prepare-containerization}
+    - {role: pi-security}
+
+  tasks:
+  - set_fact:
+      master_node_ip='{{ hostvars['pi-master-1']['ansible_host'] }}'
+      master_node_token='{{ hostvars['K8S_TOKEN_HOLDER']['token'] }}'
+
+  - debug:
+      msg:
+      - "Master node ip {{ master_node_ip }}"
+      - "Token {{ master_node_token }}"
+
+  - fail:
+      msg: 'Missing master-node IP or token, and cannot setup this agent'
+    when: not master_node_ip or not master_node_token
+
+  - name: Setup k3s
+    include_role: 
+      name: pi-k3s-setup
+    vars:
+      k3s_master_url: 'https://{{ master_node_ip }}:6443'
+      k3s_master_token: '{{ master_node_token }}'
+  
+  

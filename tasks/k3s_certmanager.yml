@@ -1,8 +1,4 @@
 ---
-- name: Install python dependencies
-  pip:
-    name: ['setuptools', 'openshift', 'PyYAML']
-
 - name: Create cert-manager namespace
   become: yes
   k8s:

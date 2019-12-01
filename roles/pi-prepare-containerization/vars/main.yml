@@ -1,0 +1,5 @@
+---
+# vars file for pi-prepare-containerization
+pi_gpu_memory: 16
+pi_cgroup_flags: 'cgroup_enable=cpuset cgroup_enable=memory cgroup_memory=1'
+pi_cmdline_path: '/boot/cmdline.txt'

@@ -1,0 +1,55 @@
+---
+- name: Update and upgrade apt packages
+  apt:
+    upgrade: yes
+    update_cache: yes
+    cache_valid_time: 86400 #One day
+
+- name: Install apt-transport-https
+  apt:
+    name: apt-transport-https
+    state: present
+
+- name: Install firewall
+  apt:
+    name: ufw
+    state: present
+
+- name: Allow SSH
+  ufw:
+    rule: allow
+    port: ssh
+    proto: tcp
+
+- name: Allow generic HTTP port
+  ufw:
+    rule: allow
+    port: '80'
+
+- name: Enable firewall
+  ufw:
+    state: disabled
+
+# Greatly reduce brute force attacks
+- name: Install fail2ban
+  apt:
+    name: fail2ban
+    state: present
+
+# Ensure regular security updates are included
+- name: Install unattended-upgrades
+  apt:
+    name: unattended-upgrades
+    state: present
+
+- name: Copy unattended-upgrades primary configurations
+  copy:
+    src: files/50unattended-upgrades
+    dest: /etc/apt/apt.conf.d/
+    mode: '0644'
+
+- name: Copy unattended-upgrades periodic rules
+  copy:
+    src: files/02periodic
+    dest: /etc/apt/apt.conf.d/
+    mode: '0644'

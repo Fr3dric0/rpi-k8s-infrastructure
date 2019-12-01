@@ -1,0 +1,57 @@
+---
+
+- name: Make sure installed/latest ca-certificates
+  apt: 
+    name: ca-certificates
+    state: latest
+
+- name: Check if cgroup flags exists
+  command: grep -Fq "{{ pi_cgroup_flags }}" {{ pi_cmdline_path }}
+  check_mode: no
+  ignore_errors: yes
+  changed_when: no
+  register: cgroupcontents
+
+- set_fact:
+    has_cgroup={{ cgroupcontents.rc == 0 }}
+
+# Need to do some manual backup  
+- name: Copy old cmdline.txt
+  copy:
+    src: '{{ pi_cmdline_path }}'
+    dest: '{{ pi_cmdline_path }}.bkup'
+    remote_src: yes
+
+- name: Add cgroup flags
+  replace:
+    path: '{{ pi_cmdline_path }}'
+    regexp: 'rootwait$'
+    replace: 'rootwait cgroup_enable=cpuset cgroup_enable=memory cgroup_memory=1'
+  register: cgroupflags
+
+- command: swapon -s
+  register: swapsummary
+  check_mode: no
+  changed_when: no
+
+- set_fact:
+    is_swap_enabled: '{{ swapsummary.stdout != "" }}'
+
+- name: Disable swap
+  shell: dphys-swapfile swapoff && dphys-swapfile uninstall && update-rc.d dphys-swapfile remove
+  register: disableswap
+  when: is_swap_enabled | bool
+
+- name: Setting GPU memory split to {{ pi_gpu_memory }}mb
+  lineinfile:
+    path: /boot/config.txt
+    regexp: '^#?gpu_mem'
+    line: 'gpu_mem={{ pi_gpu_memory }}'
+    insertafter: EOF
+    state: present
+  register: gpumemsplit
+
+- name: Reboot Raspberry
+  reboot:
+    msg: 'Static IP assigned rebooting...'
+  when: cgroupflags.changed or gpumemsplit.changed
