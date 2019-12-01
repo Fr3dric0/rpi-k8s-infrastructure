@@ -1,21 +1,2 @@
-- hosts: masters
-  become: yes
-
-  vars:
-    gpu_mem: 16
-    k3s_master_host: 'https://192.168.0.105:6443'
-
-  tasks:
-  - name: Congratulations!
-    debug:
-      msg:
-        - "Configuring this host as k8s master node"
-
-  - name: Prepare Raspberry for k3s
-    import_tasks: tasks/rpi_prepare_k3s.yml
-
-  - name: Setup k3s
-    import_tasks: tasks/k3s_master.yml
-
-  - name: Configure cluster
-    import_tasks: tasks/k3s_certmanager.yml
+- name: Setup master nodes
+  import_playbook: play_master_nodes.yml
