@@ -2,8 +2,8 @@
   become: yes
 
   roles:
-    - {role: pi-base-setup}
-    - {role: pi-prepare-containerization}
-    - {role: pi-security}
-    - {role: pi-k3s-setup}
-    - {role: pi-k3s-master-config}
+    - { role: pi-base-setup }
+    - { role: pi-prepare-containerization }
+    - { role: pi-security }
+    - { role: pi-k3s-setup }
+    - { role: pi-k3s-master-config }

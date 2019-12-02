@@ -1,0 +1,3 @@
+---
+# vars file for pi-k3s-certmanager
+k3s_certmanager_version: 'v0.12.0'

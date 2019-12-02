@@ -2,9 +2,9 @@
   become: yes
 
   roles:
-    - {role: pi-base-setup}
-    - {role: pi-prepare-containerization}
-    - {role: pi-security}
+    - { role: pi-base-setup }
+    - { role: pi-prepare-containerization }
+    - { role: pi-security }
 
   tasks:
   # Token is set by the role pi-k3s-setup when the master 

@@ -1,6 +1,5 @@
 - hosts: masters
   become: yes
 
-  tasks:
-  - name: Setup cert-manager for lokalvert.tech
-    import_tasks: tasks/k3s_certmanager.yml
+  roles:
+  - { role: pi-k3s-certmanager }
