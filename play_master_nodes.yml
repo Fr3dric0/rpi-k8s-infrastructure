@@ -1,9 +1,6 @@
 - hosts: masters
   become: yes
 
-  vars:
-    k3s_master_host: 'https://192.168.0.105:6443'
-
   roles:
     - {role: pi-base-setup}
     - {role: pi-prepare-containerization}
@@ -11,12 +8,5 @@
     - {role: pi-k3s-setup}
 
   tasks:
-  - debug:
-      msg:
-        - "Configuring this host as k8s master node"
-
   - name: Setup k3s
     import_tasks: tasks/k3s_master.yml
-
-  - name: Configure cluster
-    import_tasks: tasks/k3s_certmanager.yml

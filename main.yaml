@@ -1,5 +1,8 @@
 - name: Setup master nodes
   import_playbook: play_master_nodes.yml
 
-- name:
+- name: Setup agent nodes
   import_playbook: play_agent_nodes.yml
+
+- name: Configure kubernetes
+  import_playbook: play_kubernetes_configurations.yml
