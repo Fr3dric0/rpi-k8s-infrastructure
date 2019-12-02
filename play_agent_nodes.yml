@@ -28,7 +28,7 @@
       name: pi-k3s-setup
     vars:
       # k3s knows that it should install an agent node, 
-      when these variables are set
+      # when these variables are set
       k3s_master_url: 'https://{{ master_node_ip }}:6443'
       k3s_master_token: '{{ master_node_token }}'
   
