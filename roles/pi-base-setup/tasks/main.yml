@@ -10,7 +10,7 @@
     name: ntfs-3g
     state: present
 
-- name: Install some base packages ⑦
+- name: Install some base packages
   apt:
     name: "{{ packages }}"
     state: present

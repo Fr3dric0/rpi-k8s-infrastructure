@@ -1,15 +1,24 @@
-Role Name
+pi-k3s-setup
 =========
 
-A brief description of the role goes here.
-
-Requirements
-------------
-
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
+Installs and initialized the k3s cluster as an server (master) or agent.
 
 Role Variables
 --------------
+
+If you are initializing an agent will you probably run it as a role inside a task,
+to include values dynamically.
+
+```
+- name: Setup k3s
+  include_role: 
+    name: pi-k3s-setup
+  vars:
+    k3s_master_url: 'https://{{ master_node_ip }}:6443'
+    k3s_master_token: '{{ master_node_token }}'
+```
+
+For master node is it sufficient to just include the role without any extra variables
 
 A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
 
@@ -21,18 +30,23 @@ A list of other roles hosted on Galaxy should go here, plus any details in regar
 Example Playbook
 ----------------
 
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
 
-    - hosts: servers
-      roles:
-         - { role: username.rolename, x: 42 }
+If you are initializing an agent will you probably run it as a role inside a task,
+to include values dynamically.
 
-License
--------
+```yml
+- name: Setup k3s
+  include_role: 
+    name: pi-k3s-setup
+  vars:
+    k3s_master_url: 'https://{{ master_node_ip }}:6443'
+    k3s_master_token: '{{ master_node_token }}'
+```
 
-BSD
+For master node is it sufficient to just include the role without any extra variables
 
-Author Information
-------------------
-
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
+```yml
+- hosts: servers
+  roles:
+  - { role: pi-k3s-setup }
+```

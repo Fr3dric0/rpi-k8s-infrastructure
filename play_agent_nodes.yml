@@ -7,6 +7,8 @@
     - {role: pi-security}
 
   tasks:
+  # Token is set by the role pi-k3s-setup when the master 
+  # node was created (it has to be called first)
   - set_fact:
       master_node_ip='{{ hostvars['pi-master-1']['ansible_host'] }}'
       master_node_token='{{ hostvars['K8S_TOKEN_HOLDER']['token'] }}'
@@ -16,6 +18,7 @@
       - "Master node ip {{ master_node_ip }}"
       - "Token {{ master_node_token }}"
 
+  # Sanity check before proceeding with installation
   - fail:
       msg: 'Missing master-node IP or token, and cannot setup this agent'
     when: not master_node_ip or not master_node_token
@@ -24,6 +27,8 @@
     include_role: 
       name: pi-k3s-setup
     vars:
+      # k3s knows that it should install an agent node, 
+      when these variables are set
       k3s_master_url: 'https://{{ master_node_ip }}:6443'
       k3s_master_token: '{{ master_node_token }}'
   

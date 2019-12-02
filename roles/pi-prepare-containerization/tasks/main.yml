@@ -1,5 +1,4 @@
 ---
-
 - name: Make sure installed/latest ca-certificates
   apt: 
     name: ca-certificates
