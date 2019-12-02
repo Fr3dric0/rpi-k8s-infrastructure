@@ -1,4 +1,5 @@
 ---
+# tasks file for pi-k3s-master-config
 # Simplifies management of k3s
 - name: Install k3sup
   become: yes

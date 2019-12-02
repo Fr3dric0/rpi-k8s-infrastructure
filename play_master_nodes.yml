@@ -6,7 +6,4 @@
     - {role: pi-prepare-containerization}
     - {role: pi-security}
     - {role: pi-k3s-setup}
-
-  tasks:
-  - name: Setup k3s
-    import_tasks: tasks/k3s_master.yml
+    - {role: pi-k3s-master-config}
