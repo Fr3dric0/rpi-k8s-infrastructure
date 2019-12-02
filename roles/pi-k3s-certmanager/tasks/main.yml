@@ -8,16 +8,17 @@
     kind: Namespace
     state: present
 
+# Download the certmanager_version the playbook requested
 - get_url:
     url: https://github.com/jetstack/cert-manager/releases/download/{{ k3s_certmanager_version }}/cert-manager.yaml
     dest: /tmp/cert-manager-{{ k3s_certmanager_version }}.yaml
     mode: '0440'
   register: certmanagerdeployment
-  
 
 - name: Deploy cert-manager
   become: yes
   shell: kubectl apply -f /tmp/cert-manager-{{ k3s_certmanager_version }}.yaml
+  # Only update configurations if we use another k3s_certmanager_version
   when: certmanagerdeployment.changed
   # Would rather prefer to use this
   #k8s:
