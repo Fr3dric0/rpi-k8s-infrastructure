@@ -27,7 +27,7 @@
   #  src: /tmp/cert-manager.yaml
 
 - copy:
-    src: kubernetes/cluster-issuer.yaml
+    src: files/cluster-issuer.yaml
     dest: /tmp/cluster-issuer.yaml
     owner: pi
     group: pi
