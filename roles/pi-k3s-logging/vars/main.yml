@@ -2,4 +2,5 @@
 # vars file for pi-k3s-logging
 k3s_logging_namespace: 'logging'
 k3s_fluent_image: 'fluent/fluentd-kubernetes-daemonset:v1-debian-elasticsearch'
-k3s_elasticsearch_image: 'amazon/opendistro-for-elasticsearch:1.2.0'
+# This is a elasticsearch image we know works with arm images
+k3s_elasticsearch_image: 'ind3x/rpi-elasticsearch'

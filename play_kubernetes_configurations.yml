@@ -5,3 +5,4 @@
   - role: pi-k3s-certmanager
     vars:
       k3s_certmanager_version: 'v0.12.0'
+  - { role: pi-k3s-logging }
