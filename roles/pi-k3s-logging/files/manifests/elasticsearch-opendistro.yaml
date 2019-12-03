@@ -1,0 +1,216 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: elasticsearch-confmap
+  namespace: {{ k3s_logging_namespace }}
+  labels:
+    app: elasticsearch
+data:
+  elasticsearch.yml: |-
+    cluster:
+      name: ${CLUSTER_NAME}
+      initial_master_nodes: ${NODE_NAME}
+    node:
+      master: ${NODE_MASTER}
+      data: ${NODE_DATA}
+      name: ${NODE_NAME}
+      ingest: ${NODE_INGEST}
+      max_local_storage_nodes: 1
+      attr.box_type: hot
+
+    processors: ${PROCESSORS:1}
+
+    network.host: ${NETWORK_HOST}
+
+    path:
+      data: /usr/share/elasticsearch/data
+      logs: /usr/share/elasticsearch/logs
+
+    http:
+      compression: true
+
+    opendistro_security.disabled: true
+
+    # TLS Configuration Transport Layer
+    #opendistro_security.ssl.transport.pemcert_filepath: elk-crt.pem
+    #opendistro_security.ssl.transport.pemkey_filepath: elk-key.pem
+    #opendistro_security.ssl.transport.pemtrustedcas_filepath: elk-root-ca.pem
+    #opendistro_security.ssl.transport.pemkey_password: ${TRANSPORT_TLS_PEM_PASS}
+    #opendistro_security.ssl.transport.enforce_hostname_verification: false
+
+    # TLS Configuration REST Layer
+    #opendistro_security.ssl.http.enabled: true
+    #opendistro_security.ssl.http.pemcert_filepath: elk-crt.pem
+    #opendistro_security.ssl.http.pemkey_filepath: elk-key.pem
+    #opendistro_security.ssl.http.pemtrustedcas_filepath: elk-root-ca.pem
+    #opendistro_security.ssl.http.pemkey_password: ${HTTP_TLS_PEM_PASS}
+
+    # Demo Certificate Option Disabled
+    opendistro_security.allow_unsafe_democertificates: false
+
+    opendistro_security.allow_default_init_securityindex: false
+
+    opendistro_security.authcz.admin_dn:
+      - CN=admin.example.com
+    opendistro_security.nodes_dn:
+      - 'CN=sec.other.com,OU=SSL,O=Test,L=Test,C=DE'
+      - 'CN=*.example.com,OU=SSL,O=Test,L=Test,C=DE'
+      - 'CN=*.sec.example.com'
+      - 'CN=sec.examples.com'
+
+    opendistro_security.audit.type: internal_elasticsearch
+    opendistro_security.enable_snapshot_restore_privilege: true
+    opendistro_security.check_snapshot_restore_write_privileges: true
+    opendistro_security.restapi.roles_enabled: ["all_access", "security_rest_api_access"]
+    cluster.routing.allocation.disk.threshold_enabled: false
+    opendistro_security.audit.config.disabled_rest_categories: NONE
+    opendistro_security.audit.config.disabled_transport_categories: NONE
+
+  logging.yml: |-
+    # you can override this using by setting a system property, for example -Des.logger.level=DEBUG
+    es.logger.level: INFO
+    rootLogger: ${es.logger.level}, console
+    logger:
+      # log action execution errors for easier debugging
+      action: DEBUG
+      # reduce the logging for aws, too much is logged under the default INFO
+      com.amazonaws: WARN
+    appender:
+      console:
+        type: console
+        layout:
+          type: consolePattern
+          conversionPattern: "[%d{ISO8601}][%-5p][%-25c] %m%n"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: elasticsearch
+  namespace: {{ k3s_logging_namespace }}
+  labels:
+    app: elasticsearch
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: elasticsearch
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: elasticsearch
+    spec:
+      initContainers:
+        - name: init-sysctl
+          image: busybox:1.27.2
+          command:
+            - sysctl
+            - -w
+            - vm.max_map_count=262144
+          securityContext:
+            privileged: true
+      securityContext: #This fixes readpermissions for the elasticsearch persistent volume.
+        fsGroup: 2000
+      containers:
+        - name: elasticsearch-app
+          env:
+            - name: CLUSTER_NAME
+              value: elasticsearch-cluster
+            - name: NUMBER_OF_MASTERS
+              value: "1"
+            - name: NODE_MASTER
+              value: "true"
+            - name: NODE_INGEST
+              value: "true"
+            - name: NODE_DATA
+              value: "true"
+            - name: NETWORK_HOST
+              value: "0.0.0.0"
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: KUBERNETES_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: ES_JAVA_OPTS
+              value: -Xms256m -Xmx256m
+          resources:
+            requests:
+              memory: 256M
+            limits:
+              memory: 1Gi
+          livenessProbe:
+            tcpSocket:
+              port: es-transport
+            initialDelaySeconds: 60
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /_cluster/health
+              port: es-http
+            initialDelaySeconds: 20
+            timeoutSeconds: 5
+          # Official Image from Open Distro Team
+          image: {{ k3s_elasticsearch_image }}
+          ports:
+            - containerPort: 9300
+              name: es-transport
+            - containerPort: 9200
+              name: es-http
+            - containerPort: 9600
+              name: es-metrics
+          volumeMounts:
+            - name: elasticsearch-pvc
+              mountPath: "/usr/share/elasticsearch/data"
+            - mountPath: /usr/share/elasticsearch/config/elasticsearch.yml #Mounts the config from confmap
+              name: elasticsearch-config
+              subPath: elasticsearch.yml
+            - mountPath: /usr/share/elasticsearch/config/logging.yml
+              name: elasticsearch-config
+              subPath: logging.yml
+
+      volumes:
+        - name: elasticsearch-pvc
+          persistentVolumeClaim:
+            claimName: elasticsearch-pv-claim
+        - name: elasticsearch-config   #Creates a volume with the config from confmap
+          configMap:
+            name: elasticsearch-confmap
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: elasticsearch-pv-claim
+  namespace: {{ k3s_logging_namespace }}
+spec:
+  storageClassName: local-path
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: elasticsearch
+  namespace: {{ k3s_logging_namespace }}
+  labels:
+    app: elasticsearch
+spec:
+  type: ClusterIP # ClusterIP is used since ES shouldn't be publicly available
+  selector:
+    app: elasticsearch
+  ports:
+    - name: es-http
+      port: 9200
+      protocol: TCP
+    - name: es-transport
+      port: 9300
+      protocol: TCP
+    - name: es-metrics
+      port: 9600
+      protocol: TCP

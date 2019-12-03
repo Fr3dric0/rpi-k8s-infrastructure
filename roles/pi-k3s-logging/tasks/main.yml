@@ -1,0 +1,50 @@
+---
+- name: Create {{ k3s_logging_namespace }} namespace
+  become: yes
+  k8s:
+    kubeconfig: /etc/rancher/k3s/k3s.yaml
+    name: '{{ k3s_logging_namespace }}'
+    api_version: v1
+    kind: Namespace
+    state: present
+
+# - name: Copy logging manifests
+#   template:
+#     src: files/manifests/{{ item }}
+#     dest: /tmp/{{ item }}
+#     owner: pi
+#     group: pi
+#     mode: '0644'
+#   with_items:
+#   - 'elasticsearch-opendistro.yaml'
+#   - 'fluentd-daemonset-es-rbac.yaml'
+
+# - name: Deploy manifests
+#   become: yes
+#   k8s:
+#     kubeconfig: /etc/rancher/k3s/k3s.yaml
+#     state: present
+#     src: '/tmp/{{ item }}'
+#   with_items:
+#   - 'elasticsearch-opendistro.yaml'
+#   - 'fluentd-daemonset-es-rbac.yaml'
+
+- name: Get kubernetes version
+  become: yes
+  shell: kubectl version | base64 | tr -d '\n'
+  register: k3sversion
+
+- name: Download Scope deployment file
+  get_url:
+    url: 'https://cloud.weave.works/k8s/scope.yaml?k8s-version={{ k3sversion.stdout }}'
+    dest: /tmp/weave-scope-{{ k3sversion.stdout[0:15] }}.yaml
+    mode: '0440'
+  register: weavescopedownload
+
+- name: Deploy Weaveworks Scope
+  become: yes
+  when: weavescopedownload.changed
+  k8s:
+    kubeconfig: /etc/rancher/k3s/k3s.yaml
+    state: present
+    src: '/tmp/weave-scope-{{ k3sversion.stdout[0:15] }}.yaml'

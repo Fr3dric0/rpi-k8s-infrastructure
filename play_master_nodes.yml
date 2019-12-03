@@ -5,5 +5,6 @@
     - { role: pi-base-setup }
     - { role: pi-prepare-containerization }
     - { role: pi-security }
+    - { role: geerlingguy.docker_arm }
     - { role: pi-k3s-setup }
     - { role: pi-k3s-master-config }

@@ -19,7 +19,7 @@
     msg: "Setting up as Kubernetes agent"
   when: is_agent_node | bool
 - debug:
-    msg: "Setting up as Kubernetes mater"
+    msg: "Setting up as Kubernetes master"
   when: is_master_node | bool
 
 - name: Bootstrap k3s
@@ -27,6 +27,8 @@
   environment:
     K3S_URL: '{{ k3s_master_url }}'
     K3S_TOKEN: '{{ k3s_master_token }}'
+    # We want to use docker as runtime, not containerd
+    INSTALL_K3S_EXEC: '--docker'
   when: not k3s_exists | bool
 
 - name: Ensure k3s-server service is running

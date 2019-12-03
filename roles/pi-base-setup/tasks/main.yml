@@ -18,7 +18,12 @@
     packages:
     - vim
     - aptitude
+    - apt-transport-https
+    - ca-certificates
     - git
+    - software-properties-common
+    - libffi-dev
+    - python-backports.ssl-match-hostname
 
 # Install Python2 pip for legacy reasons
 - name: Install pip

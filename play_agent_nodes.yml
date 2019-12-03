@@ -5,6 +5,7 @@
     - { role: pi-base-setup }
     - { role: pi-prepare-containerization }
     - { role: pi-security }
+    - { role: geerlingguy.docker_arm }
 
   tasks:
   # Token is set by the role pi-k3s-setup when the master 
