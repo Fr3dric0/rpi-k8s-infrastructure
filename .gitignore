@@ -1,3 +1,4 @@
 
 .vault
 sql-setting-secret.env
+nextcloud_secrets.env

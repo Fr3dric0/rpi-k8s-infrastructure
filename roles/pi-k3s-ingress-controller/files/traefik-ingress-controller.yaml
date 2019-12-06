@@ -1,0 +1,18 @@
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: traefik
+  namespace: kube-system
+  labels:
+    app.kubernetes.io/managed-by: 'ansible'
+    app.kubernetes.io/version: '{{ k3s_traefik_version }}'
+spec:
+  chart: https://%{KUBERNETES_API}%/static/charts/traefik-{{ k3s_traefik_version }}.tgz
+  set:
+    dashboard.enabled: "true"
+    rbac.enabled: "true"
+    ssl.enabled: "true"
+    ssl.enforced: "true"
+    ssl.permanentRedirect: "true"
+    metrics.prometheus.enabled: "true"
+    kubernetes.ingressEndpoint.useDefaultPublishedService: "true"

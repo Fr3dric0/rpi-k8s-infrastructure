@@ -1,0 +1,15 @@
+---
+- name: Copy updated traefik HelmChart
+  template:
+    src: files/traefik-ingress-controller.yaml
+    dest: /tmp/traefik-ingress-controller.yaml
+    owner: pi
+    group: pi
+    mode: '0644'
+
+- name: Deploy updated traefik HelmChart
+  become: yes
+  k8s:
+    kubeconfig: /etc/rancher/k3s/k3s.yaml
+    state: present
+    src: /tmp/traefik-ingress-controller.yaml

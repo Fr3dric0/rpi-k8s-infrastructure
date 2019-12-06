@@ -1,0 +1,41 @@
+---
+- name: Create namespace '{{ nextcloud_k3s_namespace }}' for nextcloud
+  become: yes
+  k8s:
+    kubeconfig: /etc/rancher/k3s/k3s.yaml
+    name: '{{ nextcloud_k3s_namespace }}'
+    api_version: v1
+    kind: Namespace
+    state: present
+
+- copy:
+    src: files/nextcloud_secrets.env
+    dest: /tmp/nextcloud_secrets.env
+    owner: root
+    group: root
+    mode: '0644'
+  run_once: yes
+  no_log: true
+  register: nextcloudsecretcopy
+
+- name: Deploy secrets '{{ nextcloud_k3s_secret_name }}' for nextcloud 
+  become: yes
+  # Bit long line. but this ensures idempotency inside kubernetes
+  shell: kubectl -n {{ nextcloud_k3s_namespace }} create secret generic {{ nextcloud_k3s_secret_name }} --from-env-file /tmp/nextcloud_secrets.env --dry-run -o yaml | kubectl apply -f -
+  run_once: yes
+  no_log: true
+  when: nextcloudsecretcopy.changed
+  
+- template:
+    src: files/nextcloud-deployment.yaml
+    dest: /tmp/nextcloud-deployment.yaml
+    owner: pi
+    group: pi
+    mode: '0644'
+
+- name: Deploy Nextcloud
+  become: yes
+  k8s:
+    kubeconfig: /etc/rancher/k3s/k3s.yaml
+    state: present
+    src: /tmp/nextcloud-deployment.yaml
