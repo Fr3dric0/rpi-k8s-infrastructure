@@ -1,0 +1,21 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: grafana
+  namespace: monitoring
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  tls:
+    - hosts:
+        - grafana-dashboard.lokalvert.tech
+      secretName: tls-secret
+  rules:
+  - host: grafana-dashboard.lokalvert.tech
+    http:
+      paths:
+      - backend:
+          serviceName: grafana
+          servicePort: http
+        path: /
