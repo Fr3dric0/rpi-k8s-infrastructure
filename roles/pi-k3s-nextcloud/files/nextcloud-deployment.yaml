@@ -185,7 +185,7 @@ spec:
             limits:
               memory: 1Gi
           volumeMounts:
-            - mountPath: /var/www/html/data
+            - mountPath: /var/www/html
               name: nextcloud-data-volume
           securityContext:
             privileged: true
