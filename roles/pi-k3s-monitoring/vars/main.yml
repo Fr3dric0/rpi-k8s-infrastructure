@@ -1,2 +1,15 @@
 ---
 # vars file for pi-k3s-monitoring
+k3s_monitoring_namespace: 'monitoring'
+
+k3s_prometheus_operator_version: ''
+k3s_prometheus_version: 'v2.11.1'
+
+k3s_grafana_version: ''
+k3s_grafana_hostname: 'grafana-dashboard.lokalvert.tech'
+
+k3s_alertmanager_version: 'v0.18.0'
+
+k3s_kubestatemetrics_version: 'v1.7.2'
+
+k3s_kuberbacproxy_version: 'v0.4.1'

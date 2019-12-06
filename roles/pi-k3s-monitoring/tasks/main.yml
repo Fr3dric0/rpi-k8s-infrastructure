@@ -1,2 +1,74 @@
 ---
-# tasks file for pi-k3s-monitoring
+- name: Create namespace '{{ k3s_monitoring_namespace }}' for monitoring
+  become: yes
+  k8s:
+    kubeconfig: /etc/rancher/k3s/k3s.yaml
+    name: '{{ k3s_monitoring_namespace }}'
+    api_version: v1
+    kind: Namespace
+    state: present
+
+- copy:
+    src: '{{ item }}'
+    dest: '/tmp/monitoring/crd/'
+    owner: pi
+    group: pi
+    mode: '0644'
+  with_fileglob:
+    - 'templates/manifests/crd/*'
+
+- copy:
+    src: '{{ item }}'
+    dest: '/tmp/monitoring/serviceaccount/'
+    owner: pi
+    group: pi
+    mode: '0644'
+  with_fileglob:
+    - 'templates/manifests/serviceaccount/*'
+
+- copy:
+    src: '{{ item }}'
+    dest: '/tmp/monitoring/roles/'
+    owner: pi
+    group: pi
+    mode: '0644'
+  with_fileglob:
+    - 'templates/manifests/roles/*'
+
+- copy:
+    src: '{{ item }}'
+    dest: '/tmp/monitoring/deployments/'
+    owner: pi
+    group: pi
+    mode: '0644'
+  with_fileglob:
+    - 'templates/manifests/deployments/*'
+
+- copy:
+    src: '{{ item }}'
+    dest: '/tmp/monitoring/servicemonitor/'
+    owner: pi
+    group: pi
+    mode: '0644'
+  with_fileglob:
+    - 'templates/manifests/servicemonitor/*'
+    
+- name: Ensure CustomResourceDefinitions are present
+  become: yes
+  shell: kubectl apply -f /tmp/monitoring/crd/
+
+- name: Ensure ServiceAccounts are present
+  become: yes
+  shell: kubectl apply -f /tmp/monitoring/serviceaccount/
+
+- name: Ensure Roles and RoleBindings are present
+  become: yes
+  shell: kubectl apply -f /tmp/monitoring/roles/
+
+- name: Deploy services
+  become: yes
+  shell: kubectl apply -f /tmp/monitoring/deployments/
+
+- name: Deploy ServiceMonitor for own services
+  become: yes
+  shell: kubectl apply -f /tmp/monitoring/servicemonitor/
